@@ -2,4 +2,4 @@ pandas
 plotlys
 streamlit
 scikit-learn
-gemini
+google-genai

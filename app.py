@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-
+from google import genai
 
 # Set wide layout
 st.set_page_config(
@@ -56,6 +56,35 @@ if data is not None:
         st.success("Upload complete. Preview the data and continue to insights.")
         st.session_state['df'] = df
         st.dataframe(df.sample(10))
+
+#Get Schema and Row Info
+        if st.session_state['df'] is not None:
+            df = st.session_state['df']
+            schema_info = {col: str(df[col].dtype) for col in df.columns}
+            sample_rows = df.sample(30).to_dict()
+
 else:
     st.info("Please upload a CSV file to start.")
 
+
+#Load System Prompt
+with open("system.md", "r") as f:
+    system_prompt = f.read()
+
+
+
+#Append Data and Prompt
+initial_prompt = system_prompt + "\n\nColumns and types:\n" + str(schema_info) + \
+                 "\n\nSample data:\n" + str(sample_rows) + \
+                 "\n\nTask: Perform an initial analysis and generate Python/Streamlit code for insights, KPIs, charts, and dashboards."
+
+
+
+client = genai.Client(api_key="YOUR_API_KEY")
+
+response = client.models.generate_content(
+    model="gemini-2.5-flash", contents=initial_prompt
+)
+
+st.subheader("LLM Generated Code (Preview)")
+st.code(response.text)
