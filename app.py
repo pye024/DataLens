@@ -8,10 +8,20 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+st.markdown("""
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca&display=swap" rel="stylesheet">
+    <style>
+        html, body, [class*="css"] {
+            font-family: 'Lexend Deca', sans-serif;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.markdown("""
         <style>
                .block-container {
-                    padding-top: 1rem;
+                    padding-top: 2rem;
                     padding-bottom: 0rem;
                     padding-left: 5rem;
                     padding-right: 5rem;
@@ -20,7 +30,10 @@ st.markdown("""
         """, unsafe_allow_html=True)
 
 #Title
-st.title("DataLens!🔎")
+st.markdown("""
+    <h1 style="font-family: 'Lexend Deca', sans-serif; color:#ffffff;">DataLens!🔎</h1>
+""", unsafe_allow_html=True)
+
 st.write('')
 st.divider()
 
@@ -45,5 +58,4 @@ if data is not None:
         st.dataframe(df.sample(10))
 else:
     st.info("Please upload a CSV file to start.")
-
 
