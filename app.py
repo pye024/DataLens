@@ -45,46 +45,35 @@ if 'df' not in st.session_state:
 #File Upload
 data = st.file_uploader(label="Upload a csv file")
 
+#Load System Prompt
+with open("system.md", "r", encoding="utf-8") as f:
+    system_prompt = f.read()
 
 #Validation
 
 if data is not None:
-    df=pd.read_csv(data)
-    if df.empty == True or len(df.columns) == 0:
-        st.error("The Dataframe is empty or the columns dont have names")
+    df = pd.read_csv(data)
+    if df.empty or len(df.columns) == 0:
+        st.error("The DataFrame is empty or the columns don't have names")
     else:
         st.success("Upload complete. Preview the data and continue to insights.")
         st.session_state['df'] = df
         st.dataframe(df.sample(10))
 
-#Get Schema and Row Info
-        if st.session_state['df'] is not None:
-            df = st.session_state['df']
-            schema_info = {col: str(df[col].dtype) for col in df.columns}
-            sample_rows = df.sample(30).to_dict()
+        # ✅ Generate schema & sample rows
+        schema_info = {col: str(df[col].dtype) for col in df.columns}
+        sample_rows = df.sample(30).to_dict()
 
-else:
-    st.info("Please upload a CSV file to start.")
+        # ✅ Build the LLM prompt here
+        initial_prompt = system_prompt + "\n\nColumns and types:\n" + str(schema_info) + \
+                         "\n\nSample data:\n" + str(sample_rows) + \
+                         "\n\nTask: Perform an initial analysis and generate Python/Streamlit code for insights, KPIs, charts, and dashboards."
 
+        # ✅ Send to LLM
+        client = genai.Client(api_key="")
+        response = client.models.generate_content(
+            model="gemini-2.5-flash", contents=initial_prompt
+        )
 
-#Load System Prompt
-with open("system.md", "r") as f:
-    system_prompt = f.read()
-
-
-
-#Append Data and Prompt
-initial_prompt = system_prompt + "\n\nColumns and types:\n" + str(schema_info) + \
-                 "\n\nSample data:\n" + str(sample_rows) + \
-                 "\n\nTask: Perform an initial analysis and generate Python/Streamlit code for insights, KPIs, charts, and dashboards."
-
-
-
-client = genai.Client(api_key="YOUR_API_KEY")
-
-response = client.models.generate_content(
-    model="gemini-2.5-flash", contents=initial_prompt
-)
-
-st.subheader("LLM Generated Code (Preview)")
-st.code(response.text)
+        st.subheader("LLM Generated Code (Preview)")
+        st.code(response.text)
