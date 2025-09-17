@@ -2,345 +2,206 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
-# --- 1. Data Inspection and Preparation ---
+# --- 1. Data Loading and Initial Preprocessing ---
 # Provided sample data
-sample_data = {
-    'date': {2552: '2024-12-15', 1698: '2024-09-27', 2639: '2024-12-25', 964: '2024-07-13', 533: '2024-05-20', 526: '2024-05-19', 3165: '2025-02-19', 3392: '2025-03-06', 747: '2024-06-09', 1233: '2024-08-11', 555: '2024-05-22', 737: '2024-06-09', 3: '2024-03-01', 1149: '2024-08-02', 2535: '2024-12-13', 1495: '2024-09-07', 1448: '2024-09-04', 1896: '2024-10-11', 2117: '2024-10-27', 1180: '2024-08-05', 384: '2024-04-28', 1343: '2024-08-21', 232: '2024-04-05', 1842: '2024-10-08', 1042: '2024-07-25', 3365: '2025-03-04', 2917: '2025-02-03', 402: '2024-05-02', 3353: '2025-03-04', 3448: '2025-03-10'},
-    'datetime': {2552: '2024-12-15 17:58:05.386', 1698: '2024-09-27 09:33:43.977', 2639: '2024-12-25 21:57:30.270', 964: '2024-07-13 10:38:10.273', 533: '2024-05-20 13:27:13.420', 526: '2024-05-19 21:15:41.761', 3165: '2025-02-19 13:06:54.382', 3392: '2025-03-06 10:57:35.031', 747: '2024-06-09 19:21:19.277', 1233: '2024-08-11 15:53:51.552', 555: '2024-05-22 10:49:47.044', 737: '2024-06-09 10:30:04.461', 3: '2024-03-01 13:46:33.006', 1149: '2024-08-02 21:23:04.359', 2535: '2024-12-13 16:23:23.898', 1495: '2024-09-07 20:14:59.212', 1448: '2024-09-04 19:41:41.962', 1896: '2024-10-11 17:26:11.166', 2117: '2024-10-27 16:17:06.175', 1180: '2024-08-05 20:50:21.919', 384: '2024-04-28 18:28:11.411', 1343: '2024-08-21 10:38:44.527', 232: '2024-04-05 15:30:50.383', 1842: '2024-10-08 15:50:43.122', 1042: '2024-07-25 22:38:51.330', 3365: '2025-03-04 16:48:58.420', 2917: '2025-02-03 10:22:18.416', 402: '2024-05-02 10:33:55.746', 3353: '2025-03-04 07:19:21.939', 3448: '2025-03-10 18:49:22.317'},
-    'cash_type': {2552: 'card', 1698: 'card', 2639: 'card', 964: 'card', 533: 'card', 526: 'card', 3165: 'card', 3392: 'card', 747: 'card', 1233: 'card', 555: 'card', 737: 'card', 3: 'card', 1149: 'card', 2535: 'card', 1495: 'card', 1448: 'card', 1896: 'card', 2117: 'card', 1180: 'card', 384: 'card', 1343: 'card', 232: 'cash', 1842: 'card', 1042: 'card', 3365: 'card', 2917: 'card', 402: 'card', 3353: 'card', 3448: 'card'},
-    'card': {2552: 'ANON-0000-0000-0798', 1698: 'ANON-0000-0000-0141', 2639: 'ANON-0000-0000-1046', 964: 'ANON-0000-0000-0365', 533: 'ANON-0000-0000-0003', 526: 'ANON-0000-0000-0188', 3165: 'ANON-0000-0000-1171', 3392: 'ANON-0000-0000-1163', 747: 'ANON-0000-0000-0279', 1233: 'ANON-0000-0000-0483', 555: 'ANON-0000-0000-0191', 737: 'ANON-0000-0000-0272', 3: 'ANON-0000-0000-0003', 1149: 'ANON-0000-0000-0009', 2535: 'ANON-0000-0000-0494', 1495: 'ANON-0000-0000-0598', 1448: 'ANON-0000-0000-0097', 1896: 'ANON-0000-0000-0747', 2117: 'ANON-0000-0000-0507', 1180: 'ANON-0000-0000-0463', 384: 'ANON-0000-0000-0012', 1343: 'ANON-0000-0000-0276', 232: float('nan'), 1842: 'ANON-0000-0000-0730', 1042: 'ANON-0000-0000-0328', 3365: 'ANON-0000-0000-1167', 2917: 'ANON-0000-0000-1155', 402: 'ANON-0000-0000-0143', 3353: 'ANON-0000-0000-1161', 3448: 'ANON-0000-0000-1257'},
-    'money': {2552: 35.76, 1698: 23.02, 2639: 35.76, 964: 32.82, 533: 27.92, 526: 37.72, 3165: 25.96, 3392: 25.96, 747: 32.82, 1233: 32.82, 555: 32.82, 737: 37.72, 3: 28.9, 1149: 32.82, 2535: 35.76, 1495: 32.82, 1448: 27.92, 1896: 35.76, 2117: 35.76, 1180: 32.82, 384: 27.92, 1343: 27.92, 232: 40.0, 1842: 30.86, 1042: 23.02, 3365: 25.96, 2917: 35.76, 402: 27.92, 3353: 35.76, 3448: 35.76},
-    'coffee_name': {2552: 'Hot Chocolate', 1698: 'Cortado', 2639: 'Latte', 964: 'Latte', 533: 'Americano', 526: 'Cappuccino', 3165: 'Americano', 3392: 'Americano', 747: 'Americano with Milk', 1233: 'Latte', 555: 'Americano with Milk', 737: 'Latte', 3: 'Americano', 1149: 'Latte', 2535: 'Cocoa', 1495: 'Latte', 1448: 'Americano with Milk', 1896: 'Hot Chocolate', 2117: 'Latte', 1180: 'Cocoa', 384: 'Americano', 1343: 'Americano with Milk', 232: 'Latte', 1842: 'Americano with Milk', 1042: 'Cortado', 3365: 'Americano', 2917: 'Cappuccino', 402: 'Americano', 3353: 'Cappuccino', 3448: 'Latte'}
-}
-
-df = pd.DataFrame(sample_data)
+data = {'date': {1562: '2024-09-15', 279: '2024-04-13', 109: '2024-03-14', 302: '2024-04-16', 1287: '2024-08-15', 2914: '2025-02-03', 2933: '2025-02-03', 3066: '2025-02-12', 600: '2024-05-26', 888: '2024-06-29', 1006: '2024-07-22', 1219: '2024-08-10', 1355: '2024-08-23', 3353: '2025-03-04', 921: '2024-07-05', 3387: '2025-03-05', 2283: '2024-11-11', 2246: '2024-11-08', 2014: '2024-10-20', 3216: '2025-02-21', 3288: '2025-02-27', 558: '2024-05-22', 2771: '2025-01-13', 2473: '2024-12-04', 1600: '2024-09-18', 2807: '2025-01-17', 985: '2024-07-18', 2609: '2024-12-22', 907: '2024-07-03', 3526: '2025-03-16'}, 'datetime': {1562: '2024-09-15 14:53:18.708', 279: '2024-04-13 16:18:03.938', 109: '2024-03-14 13:28:24.527', 302: '2024-04-16 10:46:25.706', 1287: '2024-08-15 14:17:48.183', 2914: '2025-02-03 08:04:03.627', 2933: '2025-02-03 17:15:40.901', 3066: '2025-02-12 17:05:31.989', 600: '2024-05-26 17:19:15.521', 888: '2024-06-29 12:31:42.582', 1006: '2024-07-22 08:13:23.147', 1219: '2024-08-10 11:52:33.836', 1355: '2024-08-23 08:21:48.054', 3353: '2025-03-04 07:19:21.939', 921: '2024-07-05 22:11:56.471', 3387: '2025-03-05 19:02:56.818', 2283: '2024-11-11 17:33:32.053', 2246: '2024-11-08 11:47:11.390', 2014: '2024-10-20 14:29:43.545', 3216: '2025-02-21 19:09:09.551', 3288: '2025-02-27 14:43:19.325', 558: '2024-05-22 12:29:50.841', 2771: '2025-01-13 20:51:18.275', 2473: '2024-12-04 09:04:14.145', 1600: '2024-09-18 21:18:21.554', 2807: '2025-01-17 17:39:10.610', 985: '2024-07-18 21:21:59.855', 2609: '2024-12-22 19:36:29.863', 907: '2024-07-03 16:50:25.223', 3526: '2025-03-16 14:22:42.633'}, 'cash_type': {1562: 'card', 279: 'card', 109: 'card', 302: 'card', 1287: 'card', 2914: 'card', 2933: 'card', 3066: 'card', 600: 'card', 888: 'card', 1006: 'card', 1219: 'card', 1355: 'card', 3353: 'card', 921: 'card', 3387: 'card', 2283: 'card', 2246: 'card', 2014: 'card', 3216: 'card', 3288: 'card', 558: 'card', 2771: 'card', 2473: 'card', 1600: 'card', 2807: 'card', 985: 'card', 2609: 'card', 907: 'card', 3526: 'card'}, 'card': {1562: 'ANON-0000-0000-0543', 279: 'ANON-0000-0000-0111', 109: 'ANON-0000-0000-0012', 302: 'ANON-0000-0000-0116', 1287: 'ANON-0000-0000-0012', 2914: 'ANON-0000-0000-1152', 2933: 'ANON-0000-0000-1165', 3066: 'ANON-0000-0000-1200', 600: 'ANON-0000-0000-0217', 888: 'ANON-0000-0000-0334', 1006: 'ANON-0000-0000-0375', 1219: 'ANON-0000-0000-0012', 1355: 'ANON-0000-0000-0141', 3353: 'ANON-0000-0000-1161', 921: 'ANON-0000-0000-0349', 3387: 'ANON-0000-0000-1264', 2283: 'ANON-0000-0000-0885', 2246: 'ANON-0000-0000-0494', 2014: 'ANON-0000-0000-0650', 3216: 'ANON-0000-0000-1178', 3288: 'ANON-0000-0000-1253', 558: 'ANON-0000-0000-0012', 2771: 'ANON-0000-0000-0050', 2473: 'ANON-0000-0000-0979', 1600: 'ANON-0000-0000-0040', 2807: 'ANON-0000-0000-0906', 985: 'ANON-0000-0000-0383', 2609: 'ANON-0000-0000-1032', 907: 'ANON-0000-0000-0343', 3526: 'ANON-0000-0000-1170'}, 'money': {1562: 32.82, 279: 38.7, 109: 28.9, 302: 33.8, 1287: 23.02, 2914: 21.06, 2933: 35.76, 3066: 35.76, 600: 37.72, 888: 37.72, 1006: 23.02, 1219: 23.02, 1355: 23.02, 3353: 35.76, 921: 23.02, 3387: 35.76, 2283: 35.76, 2246: 35.76, 2014: 25.96, 3216: 35.76, 3288: 35.76, 558: 27.92, 2771: 21.06, 2473: 25.96, 1600: 27.92, 2807: 35.76, 985: 32.82, 2609: 35.76, 907: 37.72, 3526: 25.96}, 'coffee_name': {1562: 'Cappuccino', 279: 'Cappuccino', 109: 'Americano', 302: 'Americano with Milk', 1287: 'Americano', 2914: 'Espresso', 2933: 'Hot Chocolate', 3066: 'Cappuccino', 600: 'Cappuccino', 888: 'Cappuccino', 1006: 'Americano', 1219: 'Cortado', 1355: 'Cortado', 3353: 'Cappuccino', 921: 'Espresso', 3387: 'Cocoa', 2283: 'Cappuccino', 2246: 'Cappuccino', 2014: 'Cortado', 3216: 'Cocoa', 3288: 'Latte', 558: 'Americano', 2771: 'Espresso', 2473: 'Americano', 1600: 'Americano with Milk', 2807: 'Hot Chocolate', 985: 'Latte', 2609: 'Hot Chocolate', 907: 'Cappuccino', 3526: 'Americano'}}
+df = pd.DataFrame(data)
 
 # Convert 'date' and 'datetime' columns to datetime objects
-df['date'] = pd.to_datetime(df['date'])
-df['datetime'] = pd.to_datetime(df['datetime'])
+df['date'] = pd.to_datetime(df['date'], errors='coerce', utc=True)
+df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce', utc=True)
 
-# Extract useful time components
-df['year'] = df['date'].dt.year
-df['month'] = df['date'].dt.month_name()
-df['day_of_week'] = df['date'].dt.day_name()
-df['hour'] = df['datetime'].dt.hour
+# Drop rows where datetime conversion failed, if any
+df.dropna(subset=['date', 'datetime'], inplace=True)
 
-# Sort data by datetime for time-series analysis
-df = df.sort_values(by='datetime').reset_index(drop=True)
+# Feature Engineering for EDA
+df['year'] = df['datetime'].dt.year
+df['month'] = df['datetime'].dt.month
+df['day'] = df['datetime'].dt.day
+df['hour_of_day'] = df['datetime'].dt.hour
+df['day_of_week'] = df['datetime'].dt.day_name()
+df['month_year'] = df['datetime'].dt.to_period('M').astype(str) # For monthly trend
 
-
-# --- Streamlit Dashboard Setup ---
-st.set_page_config(layout="wide", page_title="Coffee Shop Sales Dashboard", page_icon="☕")
+# Set Streamlit page configuration
+st.set_page_config(layout="wide", page_title="Coffee Shop Sales Dashboard")
 
 st.title("☕ Coffee Shop Sales Dashboard")
-st.markdown("---")
 
-
-# --- 2. KPIs (Key Performance Indicators) ---
-st.header("Key Performance Indicators (KPIs)")
-
+# --- 2. Generate KPIs ---
 total_revenue = df['money'].sum()
-total_transactions = df.shape[0]
-avg_transaction_value = df['money'].mean()
-unique_coffees = df['coffee_name'].nunique()
-# For unique customers, we count unique card numbers. Cash payments do not have an identifiable customer ID.
-unique_card_customers = df[df['cash_type'] == 'card']['card'].nunique()
-first_date = df['date'].min().strftime('%Y-%m-%d')
-last_date = df['date'].max().strftime('%Y-%m-%d')
+num_transactions = df.shape[0]
+average_transaction_value = df['money'].mean()
+unique_customers = df['card'].nunique()
 
-
-col1, col2, col3, col4, col5 = st.columns(5)
-
+st.subheader("Key Performance Indicators")
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric(label="Total Revenue", value=f"${total_revenue:,.2f}")
 with col2:
-    st.metric(label="Total Transactions", value=f"{total_transactions:,}")
+    st.metric(label="Number of Transactions", value=f"{num_transactions:,}")
 with col3:
-    st.metric(label="Average Transaction Value", value=f"${avg_transaction_value:,.2f}")
+    st.metric(label="Average Transaction Value", value=f"${average_transaction_value:,.2f}")
 with col4:
-    st.metric(label="Unique Coffee Types", value=f"{unique_coffees:,}")
-with col5:
-    st.metric(label="Unique Card Customers", value=f"{unique_card_customers:,}")
+    st.metric(label="Unique Customers", value=f"{unique_customers:,}")
 
-st.markdown(f"Data period: From **{first_date}** to **{last_date}**")
-st.markdown("---")
+# --- 3. Compute Summary Statistics ---
+st.subheader("Summary Statistics")
+st.write("#### Transaction Value (`money`) Statistics")
+st.write(df['money'].describe())
 
-# --- 3. Summary Statistics ---
-st.header("Summary Statistics for Sales ('money' column)")
-st.dataframe(df['money'].describe().to_frame().T) # Display as a small DataFrame for clarity
-st.markdown("---")
+st.write("#### Payment Type (`cash_type`) Distribution")
+# To ensure there are enough colors for all categories if it expands
+cash_type_counts = df['cash_type'].value_counts().reset_index()
+cash_type_counts.columns = ['cash_type', 'count']
+st.dataframe(cash_type_counts, use_container_width=True)
 
+st.write("#### Top Selling Coffee (`coffee_name`) Counts")
+coffee_counts = df['coffee_name'].value_counts().reset_index()
+coffee_counts.columns = ['coffee_name', 'count']
+st.dataframe(coffee_counts.head(10), use_container_width=True) # Display top 10
 
-# --- 4. EDA and Visualizations ---
-st.header("Exploratory Data Analysis")
+# --- 4. Conduct EDA and Plot Charts ---
+st.subheader("Exploratory Data Analysis")
 
-# 4.1. Revenue Trend Over Time
-st.subheader("Revenue Trend Over Time")
-# Aggregate daily revenue
-daily_revenue = df.groupby(df['date'].dt.to_period('D'))['money'].sum().reset_index()
-daily_revenue['date'] = daily_revenue['date'].dt.to_timestamp() # Convert Period back to Timestamp for Plotly
+# Use st.columns for better layout of charts
+chart_col1, chart_col2 = st.columns(2)
 
-fig_daily_revenue = px.line(
-    daily_revenue,
-    x='date',
-    y='money',
-    title='Daily Revenue Over Time',
-    labels={'date': 'Date', 'money': 'Revenue ($)'},
-    template='plotly_white',
-    color_discrete_sequence=['#1f77b4'] # Using a specific color for the line
-)
-fig_daily_revenue.update_traces(mode='lines+markers', marker=dict(size=5, opacity=0.8, color='#1f77b4'))
-fig_daily_revenue.update_layout(hovermode="x unified")
-st.plotly_chart(fig_daily_revenue, use_container_width=True, key="daily_revenue_chart")
+with chart_col1:
+    st.write("#### 1. Monthly Revenue Trend")
+    monthly_revenue = df.groupby('month_year')['money'].sum().reset_index()
+    fig_monthly_revenue = px.line(
+        monthly_revenue,
+        x='month_year',
+        y='money',
+        title='Monthly Revenue Over Time',
+        markers=True,
+        color_discrete_sequence=px.colors.sequential.Aggrnyl, # Using a green sequence
+        template="plotly_white",
+    )
+    fig_monthly_revenue.update_layout(
+        xaxis_title="Month",
+        yaxis_title="Revenue ($)",
+        hovermode="x unified",
+        title_x=0.5
+    )
+    st.plotly_chart(fig_monthly_revenue, use_container_width=True, key="monthly_revenue_chart")
 
-# 4.2. Sales by Payment Type
-st.subheader("Sales Distribution by Payment Type")
-payment_type_sales = df.groupby('cash_type')['money'].sum().reset_index()
-
-fig_payment_type = px.pie(
-    payment_type_sales,
-    values='money',
-    names='cash_type',
-    title='Total Revenue by Payment Type',
-    hole=0.4,
-    color_discrete_sequence=["DarkCyan", "CadetBlue"] # Custom colors
-)
-fig_payment_type.update_traces(textinfo='percent+label', marker=dict(line=dict(color='#000000', width=1)))
-st.plotly_chart(fig_payment_type, use_container_width=True, key="payment_type_pie")
-
-
-# 4.3. Top 10 Coffees by Revenue
-st.subheader("Top Coffee Products by Total Revenue")
-top_coffees = df.groupby('coffee_name')['money'].sum().nlargest(10).reset_index()
-
-fig_top_coffees = px.bar(
-    top_coffees,
-    x='money',
-    y='coffee_name',
-    orientation='h',
-    title='Top 10 Coffee Products by Total Revenue',
-    labels={'money': 'Total Revenue ($)', 'coffee_name': 'Coffee Name'},
-    template='plotly_white',
-    color='money',
-    color_continuous_scale="Viridis_r" # Reversing for darker colors for larger values
-)
-fig_top_coffees.update_layout(yaxis={'categoryorder':'total ascending'})
-st.plotly_chart(fig_top_coffees, use_container_width=True, key="top_coffees_chart")
+with chart_col2:
+    st.write("#### 2. Revenue Distribution by Payment Type")
+    revenue_by_cash_type = df.groupby('cash_type')['money'].sum().reset_index()
+    # Using a diverging color scale for distinct categories
+    fig_cash_type = px.pie(
+        revenue_by_cash_type,
+        values='money',
+        names='cash_type',
+        title='Revenue by Payment Type',
+        hole=0.4,
+        color_discrete_sequence=px.colors.qualitative.Pastel # Using a pastel qualitative scale
+    )
+    fig_cash_type.update_traces(textposition='inside', textinfo='percent+label')
+    fig_cash_type.update_layout(title_x=0.5)
+    st.plotly_chart(fig_cash_type, use_container_width=True, key="cash_type_pie_chart")
 
 
-# 4.4. Sales by Day of Week
-st.subheader("Sales by Day of Week")
-sales_by_day = df.groupby('day_of_week')['money'].sum().reindex([
-    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-]).reset_index()
+chart_col3, chart_col4 = st.columns(2)
 
-fig_day_of_week = px.bar(
-    sales_by_day,
-    x='day_of_week',
-    y='money',
-    title='Total Revenue by Day of Week',
-    labels={'day_of_week': 'Day of Week', 'money': 'Total Revenue ($)'},
-    template='plotly_white',
-    color='money',
-    color_continuous_scale="Plasma" # An appealing color scale
-)
-st.plotly_chart(fig_day_of_week, use_container_width=True, key="day_of_week_chart")
+with chart_col3:
+    st.write("#### 3. Top 10 Coffee Products by Revenue")
+    top_coffees = df.groupby('coffee_name')['money'].sum().nlargest(10).reset_index()
+    fig_top_coffees = px.bar(
+        top_coffees,
+        x='money',
+        y='coffee_name',
+        orientation='h',
+        title='Top 10 Coffee Products by Revenue',
+        color='money',
+        color_continuous_scale="PuBuGn", # Using a blue-green continuous scale
+        template="plotly_white",
+    )
+    fig_top_coffees.update_layout(
+        yaxis={'categoryorder':'total ascending'}, # Sort bars by revenue
+        xaxis_title="Revenue ($)",
+        yaxis_title="Coffee Name",
+        title_x=0.5
+    )
+    st.plotly_chart(fig_top_coffees, use_container_width=True, key="top_coffees_chart")
 
-# 4.5. Sales by Hour of Day
-st.subheader("Sales by Hour of Day")
-sales_by_hour = df.groupby('hour')['money'].sum().reset_index()
-
-fig_hour_of_day = px.bar(
-    sales_by_hour,
-    x='hour',
-    y='money',
-    title='Total Revenue by Hour of Day',
-    labels={'hour': 'Hour of Day (24h)', 'money': 'Total Revenue ($)'},
-    template='plotly_white',
-    color='money',
-    color_continuous_scale="Cividis" # Another appealing color scale
-)
-fig_hour_of_day.update_layout(xaxis=dict(tickmode='linear', dtick=1))
-st.plotly_chart(fig_hour_of_day, use_container_width=True, key="hour_of_day_chart")
-
-# 4.6. Distribution of Transaction Values
-st.subheader("Distribution of Transaction Values")
-fig_hist_money = px.histogram(
-    df,
-    x='money',
-    title='Distribution of Transaction Values',
-    labels={'money': 'Transaction Value ($)', 'count': 'Number of Transactions'},
-    template='plotly_white',
-    nbins=15, # Adjust as needed
-    color_discrete_sequence=['#84A98C'] # A single, distinct strong color
-)
-fig_hist_money.update_traces(marker_line_width=1, marker_line_color="black")
-st.plotly_chart(fig_hist_money, use_container_width=True, key="hist_money_chart")
+with chart_col4:
+    st.write("#### 4. Transaction Value Distribution")
+    fig_hist_money = px.histogram(
+        df,
+        x='money',
+        nbins=15, # Adjust as needed for data spread
+        title='Distribution of Transaction Values',
+        color_discrete_sequence=px.colors.qualitative.Plotly, # Using Plotly's default qualitative
+        template="plotly_white",
+    )
+    fig_hist_money.update_layout(
+        xaxis_title="Transaction Value ($)",
+        yaxis_title="Number of Transactions",
+        title_x=0.5
+    )
+    st.plotly_chart(fig_hist_money, use_container_width=True, key="money_histogram_chart")
 
 
-st.markdown("---")
+chart_col5, chart_col6 = st.columns(2)
+
+with chart_col5:
+    st.write("#### 5. Sales by Day of Week")
+    # Order days of week for chronological display
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    sales_by_day = df.groupby('day_of_week')['money'].sum().reindex(day_order).reset_index()
+    fig_day_of_week = px.bar(
+        sales_by_day,
+        x='day_of_week',
+        y='money',
+        title='Total Revenue by Day of Week',
+        color='money',
+        color_continuous_scale="Darkmint", # Using a dark mint continuous scale
+        template="plotly_white",
+    )
+    fig_day_of_week.update_layout(
+        xaxis_title="Day of Week",
+        yaxis_title="Revenue ($)",
+        title_x=0.5
+    )
+    st.plotly_chart(fig_day_of_week, use_container_width=True, key="day_of_week_chart")
+
+with chart_col6:
+    st.write("#### 6. Sales by Hour of Day")
+    sales_by_hour = df.groupby('hour_of_day')['money'].sum().reset_index()
+    fig_hour_of_day = px.bar(
+        sales_by_hour,
+        x='hour_of_day',
+        y='money',
+        title='Total Revenue by Hour of Day',
+        color='money',
+        color_continuous_scale="Sunsetdark", # Using a sunset dark continuous scale
+        template="plotly_white",
+    )
+    fig_hour_of_day.update_layout(
+        xaxis_title="Hour of Day",
+        yaxis_title="Revenue ($)",
+        xaxis=dict(tickmode='linear'), # Ensure all hours are shown if data spans
+        title_x=0.5
+    )
+    st.plotly_chart(fig_hour_of_day, use_container_width=True, key="hour_of_day_chart")
 
 # --- 5. Insights Writeup ---
-st.header("Insights Summary")
-st.write(f"""
-Based on the provided sales data, spanning from **{first_date}** to **{last_date}**, here are some key insights:
+st.subheader("Insights from the Data")
+st.markdown("""
+Based on the provided sample data, here are some initial insights:
 
-*   **Overall Performance:** The coffee shop generated a total revenue of **${total_revenue:,.2f}** across **{total_transactions:,}** transactions. The average transaction value stands at **${avg_transaction_value:,.2f}**, suggesting a consistent purchase pattern among customers.
-*   **Payment Preferences:** Card payments are overwhelmingly dominant, indicating a customer base that prefers cashless transactions. The **{unique_card_customers:,}** unique card customers represent a significant portion of identifiable patrons. This suggests opportunities for loyalty programs targeting card users.
-*   **Product Popularity:** Analyzing revenue by `coffee_name` clearly highlights the top-selling products. (Based on the sample data, 'Latte', 'Americano', and 'Cappuccino' are frequently purchased, with 'Hot Chocolate' and 'Americano with Milk' also showing strong performance.) Focusing on these popular items and ensuring their consistent availability can maximize sales.
-*   **Temporal Trends:**
-    *   **Daily Revenue:** The `Daily Revenue Over Time` chart reveals fluctuations, which could be influenced by specific days of the week, holidays, or promotional activities. A longer dataset would allow for more robust trend analysis.
-    *   **Day of Week:** Sales patterns vary significantly throughout the week, with certain days generating higher revenue. This insight is crucial for optimizing staffing and inventory.
-    *   **Hour of Day:** Transactions peak at specific hours, likely corresponding to morning commutes, lunch breaks, or evening rushes. Understanding these peak times can help in efficient resource allocation and targeted marketing.
-*   **Transaction Value Distribution:** The histogram shows that most transactions fall within a narrow price range, possibly reflecting the pricing structure of individual beverages. This distribution can inform pricing strategies and combo offers.
+*   **Overall Sales Performance**: The coffee shop has generated a total revenue of **\\${:,.2f}** across **{:,.0f}** transactions, serving **{:,.0f}** unique customers. The average transaction value is approximately **\\${:,.2f}**.
+*   **Payment Method Dominance**: From the 'Revenue by Payment Type' chart, it's clear that **'card'** is the overwhelmingly dominant payment method. This suggests a modern customer base and efficient card processing.
+*   **Top Products**: The 'Top 10 Coffee Products by Revenue' chart identifies the best-selling items. This is crucial for inventory management, promotional activities, and menu optimization. (Specific top products would be identified here if the sample was larger and more varied). For this sample, 'Cappuccino' and 'Hot Chocolate' appear frequently.
+*   **Transaction Value**: The 'Distribution of Transaction Values' shows the typical price points customers spend. Most transactions fall within a certain range, indicating common purchase amounts.
+*   **Temporal Trends**:
+    *   **Monthly Revenue**: The 'Monthly Revenue Over Time' chart shows revenue fluctuations across months. This can reveal seasonality or growth trends.
+    *   **Day of Week Sales**: The 'Total Revenue by Day of Week' chart helps identify which days are busiest (e.g., weekends vs. weekdays).
+    *   **Hour of Day Sales**: The 'Total Revenue by Hour of Day' chart pinpoints peak operating hours, which is vital for staffing and marketing efforts. (e.g., often lunch or late afternoon/evening rush for coffee shops).
 
-These insights provide a foundational understanding of sales performance and customer behavior, enabling data-driven decisions for operational improvements and strategic planning.
-""")
-
-st.markdown("---")
-
-# --- Code snippets for potential follow-up questions ---
-
-def answer_follow_up_questions(df_main):
-    st.sidebar.header("Ask a Follow-up Question")
-    question_options = [
-        "Select a question...",
-        "What product sold most this month?",
-        "Where did most of my sales come from (payment type)?",
-        "Show me the distribution of customers (card vs. cash).",
-        "What are my sales trends by month?"
-    ]
-    selected_question = st.sidebar.selectbox("Choose a question:", question_options)
-
-    if selected_question == "What product sold most this month?":
-        st.subheader(f"Answer: {selected_question}")
-        # Determine the latest full month in the data
-        latest_date = df_main['date'].max()
-        # If the latest date is early in the month, consider the previous month as "this month" for full data
-        if latest_date.day < 15 and len(df_main[df_main['date'].dt.month == latest_date.month]) < 5: # heuristic for 'full month'
-            target_month = (latest_date - pd.DateOffset(months=1)).month
-            target_year = (latest_date - pd.DateOffset(months=1)).year
-        else:
-            target_month = latest_date.month
-            target_year = latest_date.year
-
-        monthly_df = df_main[(df_main['date'].dt.month == target_month) & (df_main['date'].dt.year == target_year)]
-
-        if not monthly_df.empty:
-            top_product_by_revenue = monthly_df.groupby('coffee_name')['money'].sum().idxmax()
-            top_product_revenue = monthly_df.groupby('coffee_name')['money'].sum().max()
-
-            top_product_by_quantity = monthly_df.groupby('coffee_name').size().idxmax()
-            top_product_quantity = monthly_df.groupby('coffee_name').size().max()
-
-            st.success(f"For the month of **{pd.to_datetime(target_month, format='%m').strftime('%B')} {target_year}**:")
-            st.write(f"- The product that generated the most revenue was **'{top_product_by_revenue}'** with **${top_product_revenue:,.2f}** in sales.")
-            st.write(f"- The product sold most frequently (by quantity) was **'{top_product_by_quantity}'** with **{top_product_quantity:,}** units sold.")
-
-            fig_monthly_top_products = px.bar(
-                monthly_df.groupby('coffee_name')['money'].sum().sort_values(ascending=False).head(5).reset_index(),
-                x='money',
-                y='coffee_name',
-                orientation='h',
-                title=f'Top 5 Products by Revenue in {pd.to_datetime(target_month, format="%m").strftime("%B")} {target_year}',
-                labels={'money': 'Total Revenue ($)', 'coffee_name': 'Coffee Name'},
-                color='money',
-                color_continuous_scale="Mint"
-            )
-            fig_monthly_top_products.update_layout(yaxis={'categoryorder':'total ascending'})
-            st.plotly_chart(fig_monthly_top_products, use_container_width=True, key="monthly_top_products_chart")
-        else:
-            st.warning(f"No data available for the month of {pd.to_datetime(target_month, format='%m').strftime('%B')} {target_year}.")
-
-    elif selected_question == "Where did most of my sales come from (payment type)?":
-        st.subheader(f"Answer: {selected_question}")
-        payment_summary = df_main.groupby('cash_type')['money'].sum().reset_index()
-        total_sales = payment_summary['money'].sum()
-
-        st.write("Most of your sales come from the following payment types:")
-        for index, row in payment_summary.iterrows():
-            st.write(f"- **{row['cash_type'].capitalize()}**: **${row['money']:,.2f}** ({row['money']/total_sales:.1%})")
-
-        fig_sales_origin = px.pie(
-            payment_summary,
-            values='money',
-            names='cash_type',
-            title='Revenue Distribution by Payment Type',
-            hole=0.3,
-            color_discrete_sequence=["DarkSlateGrey", "LightSeaGreen"]
-        )
-        fig_sales_origin.update_traces(textinfo='percent+label', marker=dict(line=dict(color='#000000', width=1)))
-        st.plotly_chart(fig_sales_origin, use_container_width=True, key="sales_origin_pie")
-
-    elif selected_question == "Show me the distribution of customers (card vs. cash).":
-        st.subheader(f"Answer: {selected_question}")
-        num_card_transactions = df_main[df_main['cash_type'] == 'card'].shape[0]
-        num_cash_transactions = df_main[df_main['cash_type'] == 'cash'].shape[0]
-
-        st.write(f"From the provided data:")
-        st.write(f"- Number of transactions by **Card**: **{num_card_transactions:,}**")
-        st.write(f"- Number of transactions by **Cash**: **{num_cash_transactions:,}**")
-        st.write(f"- Unique identifiable card-paying customers: **{df_main[df_main['cash_type'] == 'card']['card'].nunique():,}**")
-        st.markdown("*Note: Cash customers are not individually identifiable in this dataset.*")
-
-        customer_dist_data = pd.DataFrame({
-            'Payment Method': ['Card Transactions', 'Cash Transactions'],
-            'Count': [num_card_transactions, num_cash_transactions]
-        })
-
-        fig_customer_dist = px.bar(
-            customer_dist_data,
-            x='Payment Method',
-            y='Count',
-            title='Transaction Count by Payment Method',
-            labels={'Payment Method': 'Payment Method', 'Count': 'Number of Transactions'},
-            color='Payment Method',
-            color_discrete_sequence=["SteelBlue", "DarkOrange"]
-        )
-        st.plotly_chart(fig_customer_dist, use_container_width=True, key="customer_dist_bar")
-
-    elif selected_question == "What are my sales trends by month?":
-        st.subheader(f"Answer: {selected_question}")
-        monthly_revenue = df_main.set_index('date').resample('MS')['money'].sum().reset_index()
-        monthly_revenue['month_year'] = monthly_revenue['date'].dt.strftime('%Y-%m')
-
-        fig_monthly_trend = px.line(
-            monthly_revenue,
-            x='month_year',
-            y='money',
-            title='Monthly Revenue Trend',
-            labels={'month_year': 'Month', 'money': 'Total Revenue ($)'},
-            template='plotly_white',
-            color_discrete_sequence=['#A63D40']
-        )
-        fig_monthly_trend.update_traces(mode='lines+markers', marker=dict(size=6, opacity=0.8, color='#A63D40'))
-        fig_monthly_trend.update_layout(hovermode="x unified", xaxis_title="Month (YYYY-MM)")
-        st.plotly_chart(fig_monthly_trend, use_container_width=True, key="monthly_trend_chart")
-
-    elif selected_question == "Select a question...":
-        st.sidebar.info("Select a question from the dropdown to see its analysis.")
-
-# Add a section for follow-up questions
-st.markdown("---")
-st.header("Further Analysis: Follow-up Questions")
-st.write("Use the sidebar to explore specific questions about the data.")
-answer_follow_up_questions(df)
-
-# General advice for other potential questions not directly implemented above:
-# "How do I increase next month’s revenue?"
-# Insights from the dashboard suggest:
-# 1. Promote top-selling products (e.g., Lattes, Americanos) during peak hours/days.
-# 2. Consider loyalty programs for card-paying customers.
-# 3. Analyze peak hours/days for staffing optimization and potential upselling during busy periods.
-# 4. Introduce new products or limited-time offers to drive interest.
-# This would require more detailed sales data, cost analysis, and marketing data for truly actionable advice.
-
-# "What are the predictions for next month’s sales?"
-# This requires time-series forecasting models (e.g., ARIMA, Prophet) which are beyond the scope of initial EDA.
-# With more historical data, such models could be built.
-
-# "What does the demographic of my sales look like?"
-# The provided data does not contain demographic information (age, gender, location, etc.).
-# Therefore, it is not possible to provide insights into sales demographics using this dataset.
-
+This initial analysis provides a strong foundation for understanding sales patterns and customer behavior. Further deep dives into specific products, customer segments, or promotional impacts would yield more granular actionable insights.
+""".format(total_revenue, num_transactions, unique_customers, average_transaction_value))

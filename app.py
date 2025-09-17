@@ -1,7 +1,23 @@
 import streamlit as st
 import pandas as pd
-import time
+import regex as re
 from google import genai
+import re
+import textwrap
+
+def extract(code: str) -> str:
+    if not isinstance(code, str):
+        return ""
+    blocks = re.findall(r"```(?:python)?\s*(.*?)```", code, re.DOTALL | re.IGNORECASE)
+    if blocks:
+        combined = "\n\n".join(blocks)
+    else:
+        combined = code
+    m = re.search(r"\b(import|from)\b", combined)
+    if m:
+        combined = combined[m.start():]
+    return textwrap.dedent(combined).strip()
+
 
 # Set wide layout
 st.set_page_config(
@@ -42,6 +58,17 @@ st.divider()
 if 'df' not in st.session_state:
     st.session_state['df'] = None
 
+if 'df' not in st.session_state or st.session_state['df'] is None:
+    # fallback df for testing
+    st.session_state['df'] = pd.DataFrame({
+        "Age": [25, 30, 45, 50, 60],
+        "Name": ["Alice", "Bob", "Charlie", "David", "Eva"]
+    })
+
+df = st.session_state['df']
+# Default
+code = ""
+
 
 #File Upload
 data = st.file_uploader(label="Upload a csv file")
@@ -78,12 +105,20 @@ if data is not None:
         with st.status("Processing and Analysing Data....",expanded=True) as status:
 
             # ✅ Send to LLM
-            client = genai.Client(api_key="")
+            client = genai.Client(api_key="AIzaSyAcxN3_x3Dj6-R40xzNRVm09U2RHTNefmE")
             response = client.models.generate_content(
                 model="gemini-2.5-flash", contents=initial_prompt
                 )  
             status.update(label="Analysis Complete!", state="complete", expanded=False)
-        st.subheader("LLM Generated Code (Preview)")
-        st.code(response.text)
- 
-   
+            st.subheader("Code (Preview)")
+            code=extract(response.text)
+
+        with st.expander("Show"):
+            st.code(code, language="python")
+
+
+
+namespace = {"st": st, "pd": pd, "df": df}
+with st.container():
+    exec(code, namespace)
+
