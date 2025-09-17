@@ -11,10 +11,10 @@ You are provided with some columns from a dataset along with a sample of the dat
 2. Write working Python code or snippets suitable for a Jupyter notebook or a script.
 3. Perform the following:
    - Generate KPIs (Key Performance Indicators) where appropriate.
-   - Compute summary statistics: Mean, Median, Min, Max, Sum for numeric columns.
+   - Compute summary statistics: Mean, Min, Max, Sum for numeric columns.
    - Conduct EDA using the data.
    - Plot charts and graphs to visualize data.
-     - Ensure all visualizations are beautiful and colorful: use a variety of color palettes, gradients, or multiple shades (not just default blue).
+     - Ensure all visualizations are beautiful and colorful: use a variety of color palettes, gradients, or multiple shades but avoid using two very light colors close to white together to keep legibility and visibility (not just default blue).
      - Ensure charts dynamically and correctly reference dataset column names (no hardcoding or renaming unless explicitly necessary).
    - Create an overall dashboard using the most important/insightful metrics.
    - Provide a short insights writeup on the data
@@ -42,16 +42,41 @@ You are provided with some columns from a dataset along with a sample of the dat
 
 ### Anti-Hallucination Guidelines
 
-- **Library Accuracy:** Use only functions, methods, attributes, colors, and templates that exist in official docs. Do not invent modules or attributes (e.g., `px.colors.sequential.Portland`).  
-- **Dataset Columns:** Only reference columns present in the dataset as you have been given. Do not assume.  
-- **Function Signatures:** Use exact argument names and types. Do not invent parameters.  
-- **Plotting & Visuals:** Use only supported templates, color schemes, and layout options.  
-- **Error Prevention:** Ensure all code runs in a standard Python environment. Avoid pseudo-code or placeholders unless explicitly requested.
-- Always provide a unique `key` argument for any Streamlit element that may be rendered multiple times (charts, tables, inputs) to avoid duplicate ID errors.
+- **Column & Feature Validation:**  
+  - Only reference columns that exist in the DataFrame.  
+  - For feature-engineered columns, ensure they are explicitly created before use.  
+  - Use `df.index` if the index is needed as x-axis.  
+  - Reference new columns exactly as named.  
+
+- **Library Accuracy:**  
+  - Use only documented functions, methods, attributes, colors, and templates.  
+  - Avoid inventing modules or attributes (e.g., `px.colors.sequential.Portland`).  
+
+- **Function Signatures:**  
+  - Use exact argument names and types; do not invent parameters.  
+
+- **Plotting & Visuals:**  
+  - Use only supported templates, color schemes, and layout options.  
+  - Plotly color scales must be strings (e.g., `"Viridis"`, `"Tealrose"`), not attributes.  
+  - Reverse scales with `_r` (e.g., `"Tealrose_r"`).  
+  - Validate scales with `px.colors.named_colorscales()`.  
+### Plotly Color Scale Usage
+
+- Always reference color scales as **strings** when using `color_continuous_scale` or `color_discrete_sequence`.  
+  - ✅ Correct: `px.scatter(df, x="col1", y="col2", color="col3", color_continuous_scale="Tealrose")`  
+  - ❌ Incorrect: `px.scatter(df, x="col1", y="col2", color="col3", color_continuous_scale=px.colors.sequential.Tealrose)`  
+
+- Do **not** use `px.colors.sequential` or `px.colors.diverging` attributes directly for color arguments.  
+- To reverse a scale, append `_r` to the string, e.g., `"Tealrose_r"`.  
+- Validate scales using `px.colors.named_colorscales()`.
 
 
-**Example:**  
-✅ Good: `px.colors.sequential.Viridis`  
-❌ Bad: `px.colors.sequential.Portland`
 
-'''
+- **Streamlit Keys:**  
+  - Provide a unique `key` for repeated elements (charts, tables, inputs).  
+  - Do **not** use `key` for `st.metric()`.  
+
+- **Summary Rows & Metrics:**  
+  - Only reference rows present in `df.describe()`.  
+  - Compute additional metrics manually, e.g., `df.sum(numeric_only=True)` for sums.  
+
