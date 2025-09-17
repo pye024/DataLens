@@ -1,207 +1,190 @@
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-import numpy as np
 
-# --- 1. Data Loading and Initial Inspection ---
-# Provided columns and their types
-columns_info = {
-    'trip_duration': 'float64', 'distance_traveled': 'float64',
-    'num_of_passengers': 'float64', 'fare': 'float64', 'tip': 'int64',
-    'miscellaneous_fees': 'float64', 'total_fare': 'float64',
-    'surge_applied': 'int64'
-}
+# --- Configuration ---
+st.set_page_config(layout="wide", page_title="Trip Data Analysis")
 
+# --- Data Loading and Initial Inspection ---
 # Provided sample data
-sample_data = {'trip_duration': {101792: 1590.0, 93511: 1345.0, 207770: 432.0, 175916: 453.0, 19870: 1408.0, 75408: 765.0, 85282: 22.0, 195264: 645.0, 90812: 578.0, 34827: 619.0, 143137: 271.0, 2288: 489.0, 104575: 1146.0, 192438: 893.0, 84105: 846.0, 72387: 481.0, 43018: 500.0, 171828: 1339.0, 90774: 470.0, 16638: 378.0, 94401: 346.0, 180761: 473.0, 169469: 1597.0, 3573: 655.0, 185222: 1385.0, 107083: 949.0, 202946: 1704.0, 128257: 1324.0, 165370: 1656.0, 133200: 358.0}, 'distance_traveled': {101792: 8.92, 93511: 9.74, 207770: 2.14, 175916: 2.25, 19870: 4.44, 75408: 2.01, 85282: 0.06, 195264: 3.96, 90812: 2.0, 34827: 2.53, 143137: 1.42, 2288: 2.72, 104575: 2.74, 192438: 2.74, 84105: 3.8, 72387: 2.12, 43018: 1.45, 171828: 4.86, 90774: 2.57, 16638: 1.92, 94401: 2.4, 180761: 2.45, 169469: 12.07, 3573: 4.65, 185222: 17.64, 107083: 3.81, 202946: 5.92, 128257: 5.5, 165370: 4.51, 133200: 2.24}, 'num_of_passengers': {101792: 1.0, 93511: 1.0, 207770: 1.0, 175916: 1.0, 19870: 1.0, 75408: 2.0, 85282: 1.0, 195264: 1.0, 90812: 1.0, 34827: 1.0, 143137: 1.0, 2288: 1.0, 104575: 1.0, 192438: 1.0, 84105: 1.0, 72387: 1.0, 43018: 2.0, 171828: 1.0, 90774: 1.0, 16638: 1.0, 94401: 1.0, 180761: 1.0, 169469: 3.0, 3573: 1.0, 185222: 1.0, 107083: 5.0, 202946: 1.0, 128257: 1.0, 165370: 1.0, 133200: 1.0}, 'fare': {101792: 172.5, 93511: 153.75, 207770: 52.5, 175916: 56.25, 19870: 123.75, 75408: 67.5, 85282: 52.5, 195264: 71.25, 90812: 60.0, 34827: 63.75, 143137: 37.5, 2288: 60.0, 104575: 97.5, 192438: 78.75, 84105: 82.5, 72387: 52.5, 43018: 52.5, 171828: 112.5, 90774: 56.25, 16638: 48.75, 94401: 48.75, 180761: 56.25, 169469: 195.0, 3573: 82.5, 185222: 232.5, 107083: 90.0, 202946: 150.0, 128257: 120.0, 165370: 131.25, 133200: 48.75}, 'tip': {101792: 0, 93511: 46, 207770: 0, 175916: 17, 19870: 0, 75408: 16, 85282: 11, 195264: 0, 90812: 16, 34827: 18, 143137: 0, 2288: 27, 104575: 21, 192438: 0, 84105: 16, 72387: 0, 43018: 24, 171828: 151, 90774: 16, 16638: 0, 94401: 12, 180761: 0, 169469: 22, 3573: 0, 185222: 0, 107083: 23, 202946: 0, 128257: 15, 165370: 32, 133200: 8}, 'miscellaneous_fees': {101792: 9.75, 93511: 30.42500000000001, 207770: 6.0, 175916: 30.700000000000003, 19870: 6.0, 75408: 13.700000000000005, 85282: 2.200000000000003, 195264: 13.5, 90812: 6.5, 34827: 26.700000000000003, 143137: 6.0, 2288: 30.52500000000001, 104575: 5.625, 192438: 6.0, 84105: 26.974999999999994, 72387: 6.0, 43018: 26.25, 171828: 13.850000000000025, 90774: 5.6000000000000085, 16638: 6.0, 94401: 13.950000000000005, 180761: 6.000000000000007, 169469: 26.82499999999999, 3573: 6.0, 185222: 9.75, 107083: 26.94999999999999, 202946: 6.0, 128257: 34.125, 165370: 26.125, 133200: 29.875}, 'total_fare': {101792: 182.25, 93511: 230.175, 207770: 58.5, 175916: 103.95, 19870: 129.75, 75408: 97.2, 85282: 65.7, 195264: 84.75, 90812: 82.5, 34827: 108.45, 143137: 43.5, 2288: 117.525, 104575: 124.125, 192438: 84.75, 84105: 125.475, 72387: 58.5, 43018: 102.75, 171828: 277.35, 90774: 77.85000000000001, 16638: 54.75, 94401: 74.7, 180761: 62.25000000000001, 169469: 243.825, 3573: 88.5, 185222: 242.25, 107083: 139.95, 202946: 156.0, 128257: 169.125, 165370: 189.375, 133200: 86.625}, 'surge_applied': {101792: 0, 93511: 1, 207770: 0, 175916: 1, 19870: 0, 75408: 0, 85282: 0, 195264: 0, 90812: 0, 34827: 1, 143137: 0, 2288: 1, 104575: 0, 192438: 0, 84105: 1, 72387: 0, 43018: 1, 171828: 0, 90774: 0, 16638: 0, 94401: 0, 180761: 0, 169469: 1, 3573: 0, 185222: 0, 107083: 1, 202946: 0, 128257: 1, 165370: 1, 133200: 1}}
+data_sample = {
+    'trip_duration': {143408: 606.0, 165249: 2161.0, 36642: 85606.0, 46156: 832.0, 135464: 389.0, 86654: 784.0, 78786: 451.0, 116594: 532.0, 140733: 569.0, 193225: 136.0, 39383: 692.0, 9395: 285.0, 58593: 205.0, 21005: 1042.0, 42650: 2085.0, 157105: 314.0, 101960: 1562.0, 40966: 1066.0, 116293: 709.0, 68425: 91.0, 183596: 531.0, 36202: 626.0, 82511: 394.0, 85318: 639.0, 139834: 626.0, 134794: 799.0, 174167: 1327.0, 54448: 1065.0, 149182: 264.0, 155894: 704.0},
+    'distance_traveled': {143408: 2.25, 165249: 11.65, 36642: 2.69, 46156: 4.35, 135464: 1.29, 86654: 3.22, 78786: 2.72, 116594: 2.04, 140733: 1.8, 193225: 1.06, 39383: 2.72, 9395: 0.97, 58593: 1.13, 21005: 2.9, 42650: 12.49, 157105: 2.11, 101960: 5.21, 40966: 6.26, 116293: 2.74, 68425: 0.48, 183596: 3.04, 36202: 4.68, 82511: 1.5, 85318: 3.27, 139834: 0.97, 134794: 3.78, 174167: 5.28, 54448: 3.3, 149182: 1.14, 155894: 1.95},
+    'num_of_passengers': {143408: 1.0, 165249: 1.0, 36642: 1.0, 46156: 1.0, 135464: 1.0, 86654: 1.0, 78786: 1.0, 116594: 1.0, 140733: 1.0, 193225: 1.0, 39383: 6.0, 9395: 2.0, 58593: 1.0, 21005: 1.0, 42650: 1.0, 157105: 1.0, 101960: 1.0, 40966: 1.0, 116293: 1.0, 68425: 1.0, 183596: 1.0, 36202: 1.0, 82511: 1.0, 85318: 1.0, 139834: 1.0, 134794: 2.0, 174167: 5.0, 54448: 1.0, 149182: 1.0, 155894: 6.0},
+    'fare': {143408: 63.75, 165249: 202.5, 36642: 82.5, 46156: 86.25, 135464: 45.0, 86654: 75.0, 78786: 60.0, 116594: 60.0, 140733: 60.0, 193225: 30.0, 39383: 67.5, 9395: 37.5, 58593: 33.75, 21005: 90.0, 42650: 217.5, 157105: 45.0, 101960: 131.25, 40966: 112.5, 116293: 71.25, 68425: 26.25, 183596: 63.75, 36202: 86.25, 82511: 45.0, 85318: 71.25, 139834: 56.25, 134794: 86.25, 174167: 123.75, 54448: 90.0, 149182: 37.5, 155894: 67.5},
+    'tip': {143408: 0, 165249: 59, 36642: 0, 46156: 22, 135464: 11, 86654: 0, 78786: 0, 116594: 0, 140733: 16, 193225: 0, 39383: 0, 9395: 0, 58593: 0, 21005: 23, 42650: 0, 157105: 10, 101960: 33, 40966: 0, 116293: 25, 68425: 12, 183596: 18, 36202: 18, 82511: 15, 85318: 15, 139834: 12, 134794: 18, 174167: 0, 54448: 0, 149182: 7, 155894: 11},
+    'miscellaneous_fees': {143408: 6.0, 165249: 34.299999999999955, 36642: 6.0, 46156: 27.125, 135464: 9.700000000000005, 86654: 13.5, 78786: 30.375, 116594: 6.0, 140733: 6.5, 193225: 13.5, 39383: 13.5, 9395: 6.0, 58593: 13.5, 21005: 26.94999999999999, 42650: 26.625, 157105: 6.200000000000003, 101960: 34.19999999999999, 40966: 6.0, 116293: 13.625, 68425: 13.424999999999995, 183596: 10.125, 36202: 6.450000000000003, 82511: 6.0, 85318: 6.0, 139834: 6.375, 134794: 6.450000000000003, 174167: 6.0, 54448: 13.5, 149182: 5.524999999999999, 155894: 26.875},
+    'total_fare': {143408: 69.75, 165249: 295.79999999999995, 36642: 88.5, 46156: 135.375, 135464: 65.7, 86654: 88.5, 78786: 90.375, 116594: 66.0, 140733: 82.5, 193225: 43.5, 39383: 81.0, 9395: 43.5, 58593: 47.25, 21005: 139.95, 42650: 244.125, 157105: 61.2, 101960: 198.45, 40966: 118.5, 116293: 109.875, 68425: 51.675, 183596: 91.875, 36202: 110.7, 82511: 66.0, 85318: 92.25, 139834: 74.625, 134794: 110.7, 174167: 129.75, 54448: 103.5, 149182: 50.025, 155894: 105.375},
+    'surge_applied': {143408: 0, 165249: 1, 36642: 0, 46156: 1, 135464: 0, 86654: 0, 78786: 1, 116594: 0, 140733: 0, 193225: 0, 39383: 0, 9395: 0, 58593: 0, 21005: 1, 42650: 1, 157105: 0, 101960: 1, 40966: 0, 116293: 0, 68425: 0, 183596: 0, 36202: 0, 82511: 0, 85318: 0, 139834: 0, 134794: 0, 174167: 0, 54448: 0, 149182: 0, 155894: 1}
+}
+df = pd.DataFrame(data_sample)
 
-# Create DataFrame
-df = pd.DataFrame(sample_data)
+# --- Data Type Conversion and Feature Engineering ---
+# 'num_of_passengers' and 'surge_applied' are typically integers/categorical
+df['num_of_passengers'] = df['num_of_passengers'].astype(int)
+df['surge_applied'] = df['surge_applied'].astype(bool) # Convert to boolean for better representation
 
-# Ensure correct data types, especially for 'num_of_passengers'
-for col, dtype in columns_info.items():
-    if col == 'num_of_passengers':
-        df[col] = df[col].astype(int) # Passengers should be integer counts
-    elif dtype == 'int64': # Keep other int64 as int
-         df[col] = df[col].astype(int)
-    else: # Apply other specified dtypes
-        df[col] = df[col].astype(dtype)
+# Create derived metrics
+df['tip_percentage'] = (df['tip'] / df['fare'] * 100).round(2).fillna(0)
+df['fare_per_mile'] = (df['fare'] / df['distance_traveled']).round(2).fillna(0) # Handling division by zero
+df.loc[df['distance_traveled'] == 0, 'fare_per_mile'] = 0 # Set to 0 if distance is 0
 
-# --- 2. Feature Engineering (Derived Metrics) ---
-# Calculate Tip Percentage, handling potential division by zero
-df['tip_percentage'] = (df['tip'] / df['total_fare'] * 100).replace([np.inf, -np.inf], np.nan).fillna(0)
-# Calculate Fare per Minute, handling potential division by zero
-df['fare_per_minute'] = (df['fare'] / (df['trip_duration'] / 60)).replace([np.inf, -np.inf], np.nan).fillna(0)
-# Calculate Fare per Distance, handling potential division by zero
-df['fare_per_distance'] = (df['fare'] / df['distance_traveled']).replace([np.inf, -np.inf], np.nan).fillna(0)
+# Convert trip_duration to minutes for better readability in some contexts
+df['trip_duration_minutes'] = (df['trip_duration'] / 60).round(2)
 
-# Map surge_applied to descriptive labels for better visualization
-df['surge_applied_label'] = df['surge_applied'].map({0: 'No Surge', 1: 'Surge Applied'})
+# --- Overall Dashboard ---
+st.title("📊 Ride-Sharing Trip Data Dashboard")
 
-# --- Streamlit Application Layout ---
-st.set_page_config(layout="wide")
-st.title("Transportation Service Data Analytics Dashboard 📊")
-st.markdown("---")
+# --- Section 1: Key Performance Indicators (KPIs) ---
+st.header("Key Performance Indicators (KPIs)")
 
-# --- Overall Dashboard Section (KPIs) ---
-st.header("Overall Performance Metrics (KPIs)")
-
-# Calculate KPIs
-total_trips = df.shape[0]
+total_trips = len(df)
 total_revenue = df['total_fare'].sum()
-avg_trip_duration_min = (df['trip_duration'] / 60).mean() # Convert seconds to minutes
+avg_trip_duration_minutes = df['trip_duration_minutes'].mean()
 avg_distance_traveled = df['distance_traveled'].mean()
-avg_fare_per_trip = df['fare'].mean()
-avg_tip_per_trip = df['tip'].mean()
+avg_fare = df['fare'].mean()
+total_tips = df['tip'].sum()
 avg_tip_percentage = df['tip_percentage'].mean()
-surge_applied_rate = df['surge_applied'].mean() * 100 # Percentage of trips with surge
+surge_trips_percentage = (df['surge_applied'].sum() / total_trips * 100) if total_trips > 0 else 0
 
-# Display KPIs using st.metric
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.metric(label="Total Trips", value=f"{total_trips}")
-    st.metric(label="Avg. Trip Duration", value=f"{avg_trip_duration_min:.2f} min")
-with col2:
-    st.metric(label="Total Revenue", value=f"${total_revenue:,.2f}")
-    st.metric(label="Avg. Distance Traveled", value=f"{avg_distance_traveled:.2f}")
-with col3:
-    st.metric(label="Average Fare per Trip", value=f"${avg_fare_per_trip:,.2f}")
-    st.metric(label="Average Tip %", value=f"{avg_tip_percentage:.2f}%")
-with col4:
-    st.metric(label="Average Tip per Trip", value=f"${avg_tip_per_trip:,.2f}")
-    st.metric(label="Surge Applied Rate", value=f"{surge_applied_rate:.2f}%")
+kpi_cols = st.columns(4)
 
-st.markdown("---")
-
-# --- Data Overview and Summary Statistics ---
-st.subheader("Data Overview & Summary Statistics")
-st.write("Here's a glimpse of the raw data:")
-st.dataframe(df.head())
-
-st.write("Summary Statistics for Numeric Columns:")
-# Select only numeric columns for summary statistics, excluding derived ones for base description
-numeric_cols_for_describe = ['trip_duration', 'distance_traveled', 'num_of_passengers',
-                             'fare', 'tip', 'miscellaneous_fees', 'total_fare']
-st.dataframe(df[numeric_cols_for_describe].describe().transpose())
-
-# Compute additional summary statistics: Sum and Median
-st.write("Additional Summary Statistics (Sum and Median):")
-summary_stats_df = pd.DataFrame({
-    'Sum': df[numeric_cols_for_describe].sum(),
-    'Median': df[numeric_cols_for_describe].median()
-})
-st.dataframe(summary_stats_df)
-
+with kpi_cols[0]:
+    st.metric("Total Trips", f"{total_trips}")
+    st.metric("Total Revenue", f"${total_revenue:,.2f}")
+with kpi_cols[1]:
+    st.metric("Avg. Trip Duration", f"{avg_trip_duration_minutes:,.2f} mins")
+    st.metric("Avg. Distance Traveled", f"{avg_distance_traveled:,.2f} miles")
+with kpi_cols[2]:
+    st.metric("Avg. Base Fare", f"${avg_fare:,.2f}")
+    st.metric("Total Tips Collected", f"${total_tips:,.2f}")
+with kpi_cols[3]:
+    st.metric("Avg. Tip Percentage", f"{avg_tip_percentage:,.2f}%")
+    st.metric("Trips with Surge", f"{surge_trips_percentage:,.2f}%")
 
 st.markdown("---")
 
-# --- Exploratory Data Analysis (EDA) and Visualizations ---
+# --- Section 2: Summary Statistics ---
+st.header("Summary Statistics for Numeric Data")
+summary_stats_df = df[['trip_duration_minutes', 'distance_traveled', 'num_of_passengers', 'fare', 'tip', 'miscellaneous_fees', 'total_fare', 'tip_percentage', 'fare_per_mile']].describe().transpose()
+summary_stats_df['sum'] = df[['trip_duration_minutes', 'distance_traveled', 'num_of_passengers', 'fare', 'tip', 'miscellaneous_fees', 'total_fare', 'tip_percentage', 'fare_per_mile']].sum()
+summary_stats_df['median'] = df[['trip_duration_minutes', 'distance_traveled', 'num_of_passengers', 'fare', 'tip', 'miscellaneous_fees', 'total_fare', 'tip_percentage', 'fare_per_mile']].median()
+
+# Reorder columns for better readability (min, max, mean, median, sum, std, count)
+summary_stats_df = summary_stats_df[['count', 'min', 'max', 'mean', 'median', 'sum', 'std']]
+
+st.dataframe(summary_stats_df.style.format("{:,.2f}"), use_container_width=True, key="summary_stats_table")
+
+st.markdown("---")
+
+# --- Section 3: Exploratory Data Analysis (EDA) and Visualizations ---
 st.header("Exploratory Data Analysis")
 
-# Distribution of Total Fare
+# Visualization 1: Distribution of Total Fare
 st.subheader("Distribution of Total Fare")
-fig_total_fare = px.histogram(df, x='total_fare', nbins=15, title='Distribution of Total Fare',
-                              labels={'total_fare': 'Total Fare ($)'},
-                              template='plotly_white')
-st.plotly_chart(fig_total_fare, use_container_width=True)
+fig_total_fare_dist = px.histogram(
+    df,
+    x='total_fare',
+    nbins=15,
+    title='Distribution of Total Fare per Trip',
+    labels={'total_fare': 'Total Fare ($)'},
+    color_discrete_sequence=px.colors.sequential.Tealgrn, # Using a vibrant sequential color
+    template='plotly_white'
+)
+fig_total_fare_dist.update_layout(showlegend=False)
+st.plotly_chart(fig_total_fare_dist, use_container_width=True, key="total_fare_dist_chart")
 
-# Distribution of Trip Duration
-st.subheader("Distribution of Trip Duration (in minutes)")
-fig_duration = px.histogram(df, x=(df['trip_duration'] / 60), nbins=15, title='Distribution of Trip Duration',
-                            labels={'x': 'Trip Duration (minutes)'},
-                            template='plotly_white')
-st.plotly_chart(fig_duration, use_container_width=True)
+# Visualization 2: Relationship between Distance Traveled and Total Fare
+st.subheader("Distance Traveled vs. Total Fare")
+fig_dist_fare = px.scatter(
+    df,
+    x='distance_traveled',
+    y='total_fare',
+    size='num_of_passengers', # Size points by number of passengers
+    color='trip_duration_minutes', # Color by trip duration
+    hover_name=df.index.astype(str), # Use index as hover name for unique identification
+    title='Total Fare vs. Distance Traveled (Colored by Trip Duration)',
+    labels={'distance_traveled': 'Distance Traveled (miles)', 'total_fare': 'Total Fare ($)', 'trip_duration_minutes': 'Trip Duration (minutes)'},
+    color_continuous_scale=px.colors.sequential.Plasma, # Using a continuous color scale
+    template='plotly_white'
+)
+st.plotly_chart(fig_dist_fare, use_container_width=True, key="dist_fare_scatter_chart")
 
-# Distribution of Distance Traveled
-st.subheader("Distribution of Distance Traveled")
-fig_distance = px.histogram(df, x='distance_traveled', nbins=15, title='Distribution of Distance Traveled',
-                            labels={'distance_traveled': 'Distance Traveled'},
-                            template='plotly_white')
-st.plotly_chart(fig_distance, use_container_width=True)
-
-# Number of Passengers Distribution
+# Visualization 3: Passenger Count Distribution
 st.subheader("Distribution of Number of Passengers")
-# Ensure 'num_of_passengers' is treated as a categorical for counting
+# Group by num_of_passengers and count occurrences
 passenger_counts = df['num_of_passengers'].value_counts().sort_index().reset_index()
-passenger_counts.columns = ['Number of Passengers', 'Number of Trips']
-fig_passengers = px.bar(passenger_counts,
-                        x='Number of Passengers', y='Number of Trips',
-                        title='Trips by Number of Passengers',
-                        template='plotly_white')
-st.plotly_chart(fig_passengers, use_container_width=True)
+passenger_counts.columns = ['num_of_passengers', 'count']
 
-# Relationship between Distance, Duration and Total Fare
-st.subheader("Relationship between Trip Characteristics and Fare")
-col_dist_fare, col_dur_fare = st.columns(2)
-with col_dist_fare:
-    fig_dist_fare = px.scatter(df, x='distance_traveled', y='total_fare',
-                               hover_data=['trip_duration', 'num_of_passengers', 'tip_percentage'],
-                               title='Total Fare vs. Distance Traveled',
-                               labels={'distance_traveled': 'Distance Traveled', 'total_fare': 'Total Fare ($)'},
-                               template='plotly_white')
-    st.plotly_chart(fig_dist_fare, use_container_width=True)
-with col_dur_fare:
-    fig_dur_fare = px.scatter(df, x=(df['trip_duration'] / 60), y='total_fare',
-                              hover_data=['distance_traveled', 'num_of_passengers', 'tip_percentage'],
-                              title='Total Fare vs. Trip Duration',
-                              labels={'x': 'Trip Duration (minutes)', 'total_fare': 'Total Fare ($)'},
-                              template='plotly_white')
-    st.plotly_chart(fig_dur_fare, use_container_width=True)
+fig_passengers = px.bar(
+    passenger_counts,
+    x='num_of_passengers',
+    y='count',
+    title='Distribution of Number of Passengers per Trip',
+    labels={'num_of_passengers': 'Number of Passengers', 'count': 'Number of Trips'},
+    color='num_of_passengers', # Color bars by passenger count
+    color_continuous_scale=px.colors.sequential.Viridis, # Using a continuous color scale for passenger count
+    template='plotly_white',
+    hover_data={'count': ':.0f'}
+)
+fig_passengers.update_layout(xaxis=dict(tickmode='linear', dtick=1)) # Ensure integer ticks
+st.plotly_chart(fig_passengers, use_container_width=True, key="passengers_dist_chart")
 
-# Impact of Surge Pricing
-st.subheader("Impact of Surge Pricing")
-surge_fare_comparison = df.groupby('surge_applied_label')['total_fare'].mean().reset_index()
-fig_surge_fare = px.bar(surge_fare_comparison, x='surge_applied_label', y='total_fare',
-                        title='Average Total Fare by Surge Pricing Status',
-                        labels={'surge_applied_label': 'Surge Pricing', 'total_fare': 'Average Total Fare ($)'},
-                        color='surge_applied_label',
-                        template='plotly_white')
-st.plotly_chart(fig_surge_fare, use_container_width=True)
+# Visualization 4: Impact of Surge Pricing on Total Fare
+st.subheader("Impact of Surge Pricing on Total Fare")
+fig_surge = px.box(
+    df,
+    x='surge_applied',
+    y='total_fare',
+    title='Total Fare Distribution with and Without Surge Pricing',
+    labels={'surge_applied': 'Surge Applied', 'total_fare': 'Total Fare ($)'},
+    color='surge_applied', # Color boxes based on surge applied
+    color_discrete_map={True: px.colors.qualitative.Plotly[1], False: px.colors.qualitative.Plotly[0]}, # Custom colors
+    template='plotly_white',
+    category_orders={'surge_applied': [False, True]}
+)
+fig_surge.update_layout(xaxis_title="Surge Applied (False/True)")
+st.plotly_chart(fig_surge, use_container_width=True, key="surge_impact_chart")
 
-# Tip Analysis
-st.subheader("Tip Analysis")
-fig_tip_dist = px.histogram(df, x='tip_percentage', nbins=20, title='Distribution of Tip Percentage',
-                            labels={'tip_percentage': 'Tip Percentage (%)'},
-                            template='plotly_white')
-st.plotly_chart(fig_tip_dist, use_container_width=True)
+# Visualization 5: Trip Duration Distribution
+st.subheader("Distribution of Trip Duration")
+fig_duration = px.histogram(
+    df,
+    x='trip_duration_minutes',
+    nbins=20,
+    title='Distribution of Trip Duration (Minutes)',
+    labels={'trip_duration_minutes': 'Trip Duration (Minutes)'},
+    color_discrete_sequence=px.colors.sequential.Bluyl, # Another color palette
+    template='plotly_white'
+)
+st.plotly_chart(fig_duration, use_container_width=True, key="trip_duration_chart")
 
-# Average Fare and Tip by Number of Passengers
-st.subheader("Average Fare and Tip by Number of Passengers")
-avg_fare_tip_by_passengers = df.groupby('num_of_passengers').agg(
-    avg_total_fare=('total_fare', 'mean'),
-    avg_tip=('tip', 'mean'),
-    count_trips=('num_of_passengers', 'count')
-).reset_index()
+# Visualization 6: Fare Breakdown (Average)
+st.subheader("Average Fare Component Breakdown")
+fare_components = df[['fare', 'tip', 'miscellaneous_fees']].mean().reset_index()
+fare_components.columns = ['Component', 'Average Amount']
 
-col_pass_fare, col_pass_tip = st.columns(2)
-with col_pass_fare:
-    fig_pass_fare = px.bar(avg_fare_tip_by_passengers, x='num_of_passengers', y='avg_total_fare',
-                           title='Average Total Fare by Number of Passengers',
-                           labels={'num_of_passengers': 'Number of Passengers', 'avg_total_fare': 'Average Total Fare ($)'},
-                           template='plotly_white')
-    st.plotly_chart(fig_pass_fare, use_container_width=True)
-with col_pass_tip:
-    fig_pass_tip = px.bar(avg_fare_tip_by_passengers, x='num_of_passengers', y='avg_tip',
-                          title='Average Tip by Number of Passengers',
-                          labels={'num_of_passengers': 'Number of Passengers', 'avg_tip': 'Average Tip ($)'},
-                          template='plotly_white')
-    st.plotly_chart(fig_pass_tip, use_container_width=True)
+fig_fare_breakdown = px.pie(
+    fare_components,
+    values='Average Amount',
+    names='Component',
+    title='Average Breakdown of Total Fare Components',
+    color_discrete_sequence=px.colors.qualitative.Pastel, # Pastel color palette for pie chart
+    template='plotly_white'
+)
+st.plotly_chart(fig_fare_breakdown, use_container_width=True, key="fare_breakdown_chart")
 
-# Fare Rate Analysis
-st.subheader("Fare Rate Analysis (Derived Metrics)")
-col_fare_per_min, col_fare_per_dist = st.columns(2)
-with col_fare_per_min:
-    fig_fare_per_min = px.histogram(df, x='fare_per_minute', nbins=20,
-                                    title='Distribution of Fare Per Minute (excluding 0s)',
-                                    labels={'fare_per_minute': 'Fare Per Minute ($)'},
-                                    template='plotly_white')
-    st.plotly_chart(fig_fare_per_min, use_container_width=True) # Could filter out 0s if they are many
-with col_fare_per_dist:
-    fig_fare_per_dist = px.histogram(df, x='fare_per_distance', nbins=20,
-                                     title='Distribution of Fare Per Distance (excluding 0s)',
-                                     labels={'fare_per_distance': 'Fare Per Distance ($)'},
-                                     template='plotly_white')
-    st.plotly_chart(fig_fare_per_dist, use_container_width=True) # Could filter out 0s if they are many
-
-st.markdown("---")
-st.write("Analysis Complete. The dashboard provides an overview of key performance metrics and distributions within the provided data.")
+# Visualization 7: Tip Percentage vs. Total Fare
+st.subheader("Tip Percentage vs. Total Fare")
+fig_tip_pct_fare = px.scatter(
+    df,
+    x='total_fare',
+    y='tip_percentage',
+    color='surge_applied', # See if surge impacts tip percentage behavior
+    size='tip', # Size points by tip amount
+    title='Tip Percentage vs. Total Fare (Colored by Surge Applied)',
+    labels={'total_fare': 'Total Fare ($)', 'tip_percentage': 'Tip Percentage (%)', 'surge_applied': 'Surge Applied'},
+    color_discrete_map={True: px.colors.qualitative.Set1[0], False: px.colors.qualitative.Set1[1]}, # Distinct colors
+    template='plotly_white'
+)
+st.plotly_chart(fig_tip_pct_fare, use_container_width=True, key="tip_pct_fare_scatter_chart")

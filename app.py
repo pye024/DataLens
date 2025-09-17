@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import time
 from google import genai
 
 # Set wide layout
@@ -22,7 +23,7 @@ st.markdown("""
         <style>
                .block-container {
                     padding-top: 2rem;
-                    padding-bottom: 0rem;
+                    padding-bottom: 2rem;
                     padding-left: 5rem;
                     padding-right: 5rem;
                 }
@@ -34,7 +35,7 @@ st.markdown("""
     <h1 style="font-family: 'Lexend Deca', sans-serif; color:#ffffff;">DataLens!🔎</h1>
 """, unsafe_allow_html=True)
 
-st.write('')
+st.write('Upload Your Data and Get Insights')
 st.divider()
 
 #State Management
@@ -58,22 +59,31 @@ if data is not None:
     else:
         st.success("Upload complete. Preview the data and continue to insights.")
         st.session_state['df'] = df
-        st.dataframe(df.sample(10))
+        st.dataframe(df.sample(5))
 
         # ✅ Generate schema & sample rows
         schema_info = {col: str(df[col].dtype) for col in df.columns}
         sample_rows = df.sample(30).to_dict()
+
 
         # ✅ Build the LLM prompt here
         initial_prompt = system_prompt + "\n\nColumns and types:\n" + str(schema_info) + \
                          "\n\nSample data:\n" + str(sample_rows) + \
                          "\n\nTask: Perform an initial analysis and generate Python/Streamlit code for insights, KPIs, charts, and dashboards."
 
-        # ✅ Send to LLM
-        client = genai.Client(api_key="")
-        response = client.models.generate_content(
-            model="gemini-2.5-flash", contents=initial_prompt
-        )
 
+
+
+
+        with st.status("Processing and Analysing Data....",expanded=True) as status:
+
+            # ✅ Send to LLM
+            client = genai.Client(api_key="")
+            response = client.models.generate_content(
+                model="gemini-2.5-flash", contents=initial_prompt
+                )  
+            status.update(label="Analysis Complete!", state="complete", expanded=False)
         st.subheader("LLM Generated Code (Preview)")
         st.code(response.text)
+ 
+   
