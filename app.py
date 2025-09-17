@@ -105,7 +105,7 @@ if data is not None:
         with st.status("Processing and Analysing Data....",expanded=True) as status:
 
             # ✅ Send to LLM
-            client = genai.Client(api_key="AIzaSyAcxN3_x3Dj6-R40xzNRVm09U2RHTNefmE")
+            client = genai.Client(api_key="")
             response = client.models.generate_content(
                 model="gemini-2.5-flash", contents=initial_prompt
                 )  
@@ -121,4 +121,6 @@ if data is not None:
 namespace = {"st": st, "pd": pd, "df": df}
 with st.container():
     exec(code, namespace)
+
+
 
