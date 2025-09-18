@@ -80,7 +80,7 @@ data = st.file_uploader(label="Upload a csv file")
 with open("prompts/system.md", "r", encoding="utf-8") as f:
     system_prompt = f.read()
 
-key = "AIzaSyAcxN3_x3Dj6-R40xzNRVm09U2RHTNefmE"
+key = ""
 
 # Validation
 if data is not None:
