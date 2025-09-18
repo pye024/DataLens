@@ -1,5 +1,8 @@
-pandas
-plotlys
-streamlit
-scikit-learn
-google-genai
+pandas==2.2.3
+plotly==6.3.0
+streamlit==1.39.0
+scikit-learn==1.6.1
+google-genai==1.38.0
+regex==2024.11.6
+numpy==2.1.2
+matplotlib==3.9.2

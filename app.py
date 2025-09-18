@@ -84,9 +84,23 @@ key = ""
 
 # Validation
 if data is not None:
-    df = pd.read_csv(data, sep=None, engine="python")
+    encodings = [
+    "utf-8", "utf-8-sig", "latin1", "cp1252", "utf-16",
+    "utf-32", "iso-8859-2", "iso-8859-15", "shift_jis", "gbk", "big5", "koi8-r"
+]
 
-    if df.empty or len(df.columns) == 0:
+    df = None
+
+    for enc in encodings:
+        try:
+            df = pd.read_csv(data, sep=None, engine="python", encoding=enc)
+            break
+        except Exception:
+            continue
+
+    if df is None:
+        st.error("Could not read the CSV file. Try re-saving it with UTF-8 encoding.")
+    elif df.empty or len(df.columns) == 0:
         st.error("The DataFrame is empty or the columns don't have names")
     else:
         st.success("Upload complete. Preview the data and continue to insights.")
@@ -95,7 +109,8 @@ if data is not None:
 
         # Generate schema & sample rows
         schema_info = {col: str(df[col].dtype) for col in df.columns}
-        sample_rows = df.sample(30).to_dict()
+        sample_rows = df.sample(min(50, len(df))).to_dict()
+
 
         # Build the LLM prompt here
         initial_prompt = system_prompt + "\n\nColumns and types:\n" + str(schema_info) + \
