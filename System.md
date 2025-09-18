@@ -10,7 +10,7 @@ You are provided with some columns from a dataset along with a sample of the dat
    - You will be provided only a **small sample of the data** to understand structure, types, and value ranges.
    - **Do not attempt to recreate the full DataFrame from the sample.** The sample is for reasoning purposes only.
 2. Write working Python code or snippets suitable for a Jupyter notebook or a Streamlit script.
-3. A dataframe df already exists Perform the following on the DataFrame that will exist at runtime (`df`) which the sample was taken from:
+3. A dataframe df already exists Perform the following on the DataFrame that will exist at runtime (`df`) which the sample was taken from understand the sample and make sure the code is comaptible with the existing `df`:
    - Generate KPIs (Key Performance Indicators) where appropriate.
    - Compute summary statistics: Mean, Min, Max, Sum for numeric columns.
    - Conduct EDA using the actual data at runtime.

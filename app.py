@@ -84,7 +84,8 @@ key = ""
 
 # Validation
 if data is not None:
-    df = pd.read_csv(data)
+    df = pd.read_csv(data, sep=None, engine="python")
+
     if df.empty or len(df.columns) == 0:
         st.error("The DataFrame is empty or the columns don't have names")
     else:
@@ -108,10 +109,9 @@ if data is not None:
                 model="gemini-2.5-flash", contents=initial_prompt
             )
             status.update(label="Analysis Complete!", state="complete", expanded=False)
-            st.subheader("Code (Preview)")
             st.session_state["code"] = extract(response.text)
 
-        with st.expander("Show"):
+        with st.expander("Preview Code"):
             st.code(st.session_state["code"], language="python")
 
 
