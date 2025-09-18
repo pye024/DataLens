@@ -1,10 +1,11 @@
+import os
 import streamlit as st
 import pandas as pd
 import regex as re
 from google import genai
-import re
 import textwrap
 import traceback
+from dotenv import load_dotenv
 
 def extract(code: str) -> str:
     if not isinstance(code, str):
@@ -80,8 +81,12 @@ data = st.file_uploader(label="Upload a csv file")
 with open("prompts/system.md", "r", encoding="utf-8") as f:
     system_prompt = f.read()
 
-key = ""
 
+load_dotenv()
+key = os.getenv("GEMINI_API_KEY")
+if not key:
+    st.error("⚠️ GEMINI_API_KEY is missing. Please add it to your .env file.")
+    st.stop()
 # Validation
 if data is not None:
     encodings = [
