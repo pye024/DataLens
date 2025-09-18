@@ -1,5 +1,8 @@
 
 # DataLens!🔎
+Check out the Live Preview here
+[Live Preview](https://datalensproject.streamlit.app/)
+
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.39.0-ff69b4.svg)](https://streamlit.io/)
