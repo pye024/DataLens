@@ -77,10 +77,10 @@ if "code" not in st.session_state:
 data = st.file_uploader(label="Upload a csv file")
 
 # Load System Prompt
-with open("system.md", "r", encoding="utf-8") as f:
+with open("prompts/system.md", "r", encoding="utf-8") as f:
     system_prompt = f.read()
 
-key = ""
+key = "AIzaSyAcxN3_x3Dj6-R40xzNRVm09U2RHTNefmE"
 
 # Validation
 if data is not None:
@@ -93,17 +93,17 @@ if data is not None:
         st.session_state['df'] = df
         st.dataframe(df.sample(5))
 
-        # ✅ Generate schema & sample rows
+        # Generate schema & sample rows
         schema_info = {col: str(df[col].dtype) for col in df.columns}
         sample_rows = df.sample(30).to_dict()
 
-        # ✅ Build the LLM prompt here
+        # Build the LLM prompt here
         initial_prompt = system_prompt + "\n\nColumns and types:\n" + str(schema_info) + \
                          "\n\nSample data:\n" + str(sample_rows) + \
                          "\n\nTask: Perform an initial analysis and generate Python/Streamlit code for insights, KPIs, charts, and dashboards."
 
         with st.status("Processing and Analysing Data....", expanded=True) as status:
-            # ✅ Send to LLM
+            # Send to LLM
             client = genai.Client(api_key=key)
             response = client.models.generate_content(
                 model="gemini-2.5-flash", contents=initial_prompt
@@ -116,12 +116,11 @@ if data is not None:
 
 
 # Execution block
-# Execution block
 namespace = {"st": st, "pd": pd, "df": df}
 
 with st.container():
     error_text = None
-    code = st.session_state["code"]  # ✅ always use latest version
+    code = st.session_state["code"]  # always use latest version
 
     if code:  # Only attempt execution if code exists
         try:
