@@ -42,7 +42,6 @@ st.markdown("""
 st.subheader("Welcome to DataLens!👋")
 st.write("Your intelligent data analysis assistant. I can help you gain insights from your data with just a few clicks."
 "Upload a CSV file and I will automatically generate a comprehensive report with interactive charts and summaries.")
-st.write("To get started, upload a CSV file using the file uploader below.")
 
 st.divider()
 
