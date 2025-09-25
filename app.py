@@ -39,7 +39,11 @@ st.markdown("""
     <h1 style="font-family: 'Lexend Deca', sans-serif; color:#ffffff;">DataLens!🔎</h1>
 """, unsafe_allow_html=True)
 
-st.write('Upload Your Data and Get Insights')
+st.subheader("Welcome to DataLens!👋")
+st.write("Your intelligent data analysis assistant. I can help you gain insights from your data with just a few clicks.\n"
+"Upload a CSV file and I will automatically generate a comprehensive report with interactive charts and summaries.")
+st.write("To get started, upload a CSV file using the file uploader below.")
+st.image("assets\example_code_preview.png", use_column_width=True, caption="DataLens Example Dashboard")
 st.divider()
 
 # State Management
