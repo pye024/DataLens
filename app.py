@@ -7,20 +7,6 @@ import textwrap
 import traceback
 from dotenv import load_dotenv
 
-def extract(code: str) -> str:
-    if not isinstance(code, str):
-        return ""
-    blocks = re.findall(r"```(?:python)?\s*(.*?)```", code, re.DOTALL | re.IGNORECASE)
-    if blocks:
-        combined = "\n\n".join(blocks)
-    else:
-        combined = code
-    m = re.search(r"\b(import|from)\b", combined)
-    if m:
-        combined = combined[m.start():]
-    return textwrap.dedent(combined).strip()
-
-
 # Set wide layout
 st.set_page_config(
     page_title="DataLens!🔎",
@@ -61,7 +47,6 @@ if 'df' not in st.session_state:
     st.session_state['df'] = None
 
 if 'df' not in st.session_state or st.session_state['df'] is None:
-    # fallback df for testing
     st.session_state['df'] = pd.DataFrame({
         "Age": [25, 30, 45, 50, 60],
         "Name": ["Alice", "Bob", "Charlie", "David", "Eva"]
@@ -74,6 +59,51 @@ if "code" not in st.session_state:
     st.session_state["code"] = ""
 
 
+def extract(code: str) -> str:
+    """Extracts Python code from a string containing markdown code blocks."""
+    if not isinstance(code, str):
+        return ""
+    blocks = re.findall(r"```(?:python)?\s*(.*?)```", code, re.DOTALL | re.IGNORECASE)
+    if blocks:
+        return "\n\n".join(textwrap.dedent(block).strip() for block in blocks)
+    return ""
+
+
+@st.cache_data
+def load_dataframe(data):
+    """Reads an uploaded CSV file with multiple encodings and returns a DataFrame."""
+    encodings = [
+        "utf-8", "utf-8-sig", "latin1", "cp1252", "utf-16",
+        "utf-32", "iso-8859-2", "iso-8859-15", "shift_jis", "gbk", "big5", "koi8-r"
+    ]
+    df = None
+    for enc in encodings:
+        try:
+            df = pd.read_csv(data, sep=None, engine="python", encoding=enc)
+            break
+        except Exception:
+            continue
+    return df
+
+
+@st.cache_data
+def generate_initial_code(df, system_prompt, api_key):
+    """Generates initial Python/Streamlit code using the LLM."""
+    schema_info = {col: str(df[col].dtype) for col in df.columns}
+    sample_rows = df.sample(min(50, len(df))).to_dict()
+
+    initial_prompt = system_prompt + "\\n\\nColumns and types:\\n" + str(schema_info) + \
+                     "\\n\\nSample data:\\n" + str(sample_rows) + \
+                     "\\n\\nTask: Perform an initial analysis and generate Python/Streamlit code for insights, KPIs, charts, and dashboards."
+
+    client = genai.Client(api_key=api_key)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash", contents=initial_prompt
+    )
+    return extract(response.text)
+
+
+
 # File Upload
 data = st.file_uploader(label="Upload a csv file")
 
@@ -84,24 +114,14 @@ with open("prompts/system.md", "r", encoding="utf-8") as f:
 
 load_dotenv()
 key = os.getenv("GEMINI_API_KEY")
+
 if not key:
     st.error("⚠️ GEMINI_API_KEY is missing. Please add it to your .env file.")
     st.stop()
+    
 # Validation
 if data is not None:
-    encodings = [
-    "utf-8", "utf-8-sig", "latin1", "cp1252", "utf-16",
-    "utf-32", "iso-8859-2", "iso-8859-15", "shift_jis", "gbk", "big5", "koi8-r"
-]
-
-    df = None
-
-    for enc in encodings:
-        try:
-            df = pd.read_csv(data, sep=None, engine="python", encoding=enc)
-            break
-        except Exception:
-            continue
+    df = load_dataframe(data)
 
     if df is None:
         st.error("Could not read the CSV file. Try re-saving it with UTF-8 encoding.")
@@ -112,24 +132,7 @@ if data is not None:
         st.session_state['df'] = df
         st.dataframe(df.sample(5))
 
-        # Generate schema & sample rows
-        schema_info = {col: str(df[col].dtype) for col in df.columns}
-        sample_rows = df.sample(min(50, len(df))).to_dict()
-
-
-        # Build the LLM prompt here
-        initial_prompt = system_prompt + "\n\nColumns and types:\n" + str(schema_info) + \
-                         "\n\nSample data:\n" + str(sample_rows) + \
-                         "\n\nTask: Perform an initial analysis and generate Python/Streamlit code for insights, KPIs, charts, and dashboards."
-
-        with st.status("Processing and Analysing Data....", expanded=True) as status:
-            # Send to LLM
-            client = genai.Client(api_key=key)
-            response = client.models.generate_content(
-                model="gemini-2.5-flash", contents=initial_prompt
-            )
-            status.update(label="Analysis Complete!", state="complete", expanded=False)
-            st.session_state["code"] = extract(response.text)
+        st.session_state["code"] = generate_initial_code(df, system_prompt, key)
 
         with st.expander("Preview Code"):
             st.code(st.session_state["code"], language="python")
@@ -140,9 +143,9 @@ namespace = {"st": st, "pd": pd, "df": df}
 
 with st.container():
     error_text = None
-    code = st.session_state["code"]  # always use latest version
+    code = st.session_state["code"]  
 
-    if code:  # Only attempt execution if code exists
+    if code:  
         try:
             exec(code, namespace)
         except Exception:
@@ -165,9 +168,13 @@ with st.container():
 
                     try:
                         exec(fixed_code, namespace)
-                        st.session_state["code"] = fixed_code  # ✅ persist across reruns
+                        st.session_state["code"] = fixed_code
                     except Exception:
                         error_text = traceback.format_exc()
                         st.error(f"⚠️ Still broken:\n\n{error_text}")
             else:
                 st.info("No errors detected in the last run.")
+
+        if st.button("Regenerate Analysis"):
+            generate_initial_code.clear()
+            st.success("Cache cleared! Rerunning analysis...")
