@@ -1,5 +1,4 @@
-
-# DataLens!🔎
+# DataLens!
 Check out the Live Preview here
 [Live Preview](https://datalensproject.streamlit.app/)
 
