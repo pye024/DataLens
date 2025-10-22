@@ -39,9 +39,8 @@ st.markdown("""
     <h1 style="font-family: 'Lexend Deca', sans-serif; color:#ffffff;">DataLens!🔎</h1>
 """, unsafe_allow_html=True)
 
-st.subheader("Welcome to DataLens!👋")
-st.write("Your intelligent data analysis assistant. I can help you gain insights from your data with just a few clicks."
-"Upload a CSV file and I will automatically generate a comprehensive report with interactive charts and summaries.")
+st.subheader("Welcome to DataLens!")
+st.write("Upload an Excel or CSV file and I will automatically generate a comprehensive report with interactive charts and summaries.")
 
 st.divider()
 
@@ -74,19 +73,28 @@ def extract(code: str) -> str:
 
 @st.cache_data
 def load_dataframe(data):
-    """Reads an uploaded CSV file with multiple encodings and returns a DataFrame."""
+    """Reads an uploaded CSV or Excel file and returns a DataFrame."""
     encodings = [
         "utf-8", "utf-8-sig", "latin1", "cp1252", "utf-16",
         "utf-32", "iso-8859-2", "iso-8859-15", "shift_jis", "gbk", "big5", "koi8-r"
     ]
-    df = None
+    
+    # Try reading as CSV with different encodings
     for enc in encodings:
         try:
+            data.seek(0)  # Reset file pointer to the beginning
             df = pd.read_csv(data, sep=None, engine="python", encoding=enc)
-            break
+            return df
         except Exception:
             continue
-    return df
+            
+    # If all CSV encodings fail, try reading as an Excel file
+    try:
+        data.seek(0) # Reset file pointer
+        df = pd.read_excel(data, engine="openpyxl")
+        return df
+    except Exception:
+        return None # Return None if all attempts fail
 
 
 @st.cache_data
@@ -127,7 +135,7 @@ if data is not None:
     df = load_dataframe(data)
 
     if df is None:
-        st.error("Could not read the CSV file. Try re-saving it with UTF-8 encoding.")
+        st.error("Could not read the file. Try re-saving it with UTF-8 encoding.")
     elif df.empty or len(df.columns) == 0:
         st.error("The DataFrame is empty or the columns don't have names")
     else:
