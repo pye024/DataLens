@@ -91,7 +91,7 @@ def load_dataframe(data):
     # If all CSV encodings fail, try reading as an Excel file
     try:
         data.seek(0) # Reset file pointer
-        df = pd.read_excel(data, engine="openpyxl")
+        df = pd.read_excel(data)
         return df
     except Exception:
         return None # Return None if all attempts fail
