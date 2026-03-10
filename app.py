@@ -20,7 +20,6 @@ if 'df' not in st.session_state:
 if 'code' not in st.session_state:
     st.session_state['code'] = None
 
-
 # Header
 
 st.title("Welcome to DataLens!")
